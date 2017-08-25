@@ -1,5 +1,6 @@
 # Documentation: http://docs.travis-ci.com/user/languages/julia/
 language: julia
+sudo: required
 os:
   - linux
   - osx
@@ -8,6 +9,12 @@ julia:
   - nightly
 notifications:
   email: false
+addons:
+    apt:
+        packages:
+            - xvfb
+            - xauth
+            - libgtk-3-0
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - julia -e 'Pkg.clone(pwd()); Pkg.build("BeetleWay"); Pkg.test("BeetleWay"; coverage=true)'
