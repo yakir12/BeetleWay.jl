@@ -3,7 +3,7 @@ using DataStructures, AutoHashEquals, Base.Dates, Unitful, UnitfulAngles
 import Base: push!, empty!, delete!, isempty, ==, in, show
 
 export  VideoFile, Point, POI, Run, Repetition, Association, 
-        replace!, findVideoFiles, getVideoFiles,
+        replace!, findVideoFiles, getVideoFiles, save,
         loadLogVideoFiles, loadPOIs, loadRuns, loadAssociation
 
 const exiftool_base = joinpath(Pkg.dir("BeetleWay"), "deps", "src", "exiftool", "exiftool")
