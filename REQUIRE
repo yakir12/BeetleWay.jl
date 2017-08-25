@@ -1,0 +1,9 @@
+julia 0.6
+Reactive
+HDF5
+BinDeps
+DataStructures
+GtkReactive
+AutoHashEquals
+UnitfulAngles
+Gtk
