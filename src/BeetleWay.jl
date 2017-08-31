@@ -1,6 +1,33 @@
 module BeetleWay
 
-include(joinpath(Pkg.dir("BeetleWay"), "src", "log", "associations.jl"))
-include(joinpath(Pkg.dir("BeetleWay"), "src", "log", "gui.jl"))
+using Gtk.ShortNames, GtkReactive, DataStructures
 
+include(joinpath(@__DIR__, "log", "gui.jl"))
+
+
+folder = open_dialog("Select Video Folder", action=Gtk.GtkFileChooserAction.SELECT_FOLDER)
+# folder = "/home/yakir/datasturgeon/projects/marie/afterLog/lana"
+
+b = Builder(filename=joinpath(@__DIR__, "head.glade"))
+id = signal_connect(_ -> log_gui(folder), b["start.log"], "clicked")
+
+showall(b["head.window"])
+
+
+end # module
+
+
+#=using GtkReactive, Gtk.ShortNames
+w = Window("a")
+a = button("a")
+b = Box(:h)
+push!(b, a)
+foreach(a) do _
+    cb = checkbox(rand(Bool))
+    foreach(println, cb)
+    push!(b, cb)
+    showall(w)
 end
+push!(w, b)
+showall(w)=#
+

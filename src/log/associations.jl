@@ -53,7 +53,7 @@ Point(f::String, h::Int, m::Int, s::Int) = Point(f, Time(h, m, s))
     comment::String
 
     function POI(name, start, stop, label, comment)
-        @assert start.file != stop.file || start.time <= stop.time
+        # @assert start.file != stop.file || start.time <= stop.time
         new(name, start, stop, label, comment)
     end
 end

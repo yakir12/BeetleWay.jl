@@ -1,3 +1,22 @@
+cleanit(x::T) where T <: AbstractArray{String} = filter(!isempty, strip.(vec(x)))
+function assert_metadata(folder::String)
+    @assert isdir(folder) "$folder does not exist"
+    @assert isdir(joinpath(folder, "metadata")) "No metadata folder found"
+    @assert isfile(joinpath(folder, "metadata", "poi.csv")) "No `poi.csv` file found"
+    x = cleanit(readcsv(joinpath(folder, "metadata", "poi.csv"), String))
+    @assert !all(isempty.(x)) "There are no enteries in the `poi.csv` file" 
+    @assert allunique(x) "`poi.csv` contains duplicate items"
+
+    @assert isfile(joinpath(folder, "metadata", "run.csv")) "No `run.csv` file found"
+    x = readcsv(joinpath(folder, "metadata", "run.csv"), String)
+    for i in 1:size(x,1)
+        xi = cleanit(x[i,:])
+        @assert !all(isempty.(xi)) "There are no enteries in the `run.csv` file at line $i"
+        @assert allunique(xi) "`run.csv` contains duplicate items in line $i"
+    end
+end
+
+
 function second2hms(x::Second)::Dict{DataType, Int}
     ps = Dates.canonicalize(Dates.CompoundPeriod(x))
     a = Dict{DataType, Int}(k => 0 for k in [Hour, Minute, Second])
