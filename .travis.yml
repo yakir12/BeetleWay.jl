@@ -20,6 +20,7 @@ addons:
             - libgtk-3-0
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then ( sudo Xvfb :99 -ac -screen 0 1024x768x8; echo ok )& fi
   - xvfb-run julia -e 'Pkg.clone(pwd()); using BinDeps; println(BinDeps.debug("BeetleWay")); Pkg.build("BeetleWay"); Pkg.test("BeetleWay"; coverage=true)'
 after_success:
   - julia -e 'cd(Pkg.dir("BeetleWay")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
