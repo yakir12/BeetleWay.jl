@@ -6,12 +6,12 @@
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">BeetleWay</property>
     <child>
-      <object class="GtkBox">
+      <object class="GtkBox" id="some1">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkBox">
+          <object class="GtkBox" id="some2">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
@@ -61,7 +61,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkScrolledWindow">
+          <object class="GtkScrolledWindow" id="some3">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="shadow_type">in</property>
@@ -70,7 +70,7 @@
             <property name="propagate_natural_width">True</property>
             <property name="propagate_natural_height">True</property>
             <child>
-              <object class="GtkViewport">
+              <object class="GtkViewport" id="some4">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <child>

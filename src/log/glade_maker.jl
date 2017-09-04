@@ -6,12 +6,12 @@ const head_xml = """<?xml version="1.0" encoding="UTF-8"?>
 <property name="can_focus">False</property>
 <property name="title" translatable="yes">BeetleWay</property>
 <child>
-<object class="GtkBox">
+<object class="GtkBox" id="some1.wJqRk">
 <property name="visible">True</property>
 <property name="can_focus">False</property>
 <property name="orientation">vertical</property>
 <child>
-<object class="GtkBox">
+<object class="GtkBox" id="some2.wJqRk">
 <property name="visible">True</property>
 <property name="can_focus">False</property>
 <child>
@@ -48,7 +48,7 @@ const head_xml = """<?xml version="1.0" encoding="UTF-8"?>
 </packing>
 </child>
 <child>
-<object class="GtkBox">
+<object class="GtkBox" id="some3.wJqRk">
 <property name="visible">True</property>
 <property name="can_focus">False</property>
 <property name="orientation">vertical</property>
@@ -58,7 +58,7 @@ const head_xml = """<?xml version="1.0" encoding="UTF-8"?>
 <property name="can_focus">False</property>
 """
 label_xml(row::Int, text::String) = """<child>
-<object class="GtkLabel">
+<object class="GtkLabel" id="some4.wJqRk">
 <property name="visible">True</property>
 <property name="can_focus">False</property>
 <property name="label" translatable="yes">$text</property>
@@ -99,11 +99,11 @@ const tail_xml = """</object>
 </packing>
 </child>
 <child>
-<object class="GtkBox">
+<object class="GtkBox" id="some5.wJqRk">
 <property name="visible">True</property>
 <property name="can_focus">False</property>
 <child>
-<object class="GtkLabel">
+<object class="GtkLabel" id="some6.wJqRk">
 <property name="visible">True</property>
 <property name="can_focus">False</property>
 <property name="label" translatable="yes">Comment</property>
