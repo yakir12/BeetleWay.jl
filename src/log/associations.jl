@@ -138,6 +138,35 @@ end
 
 ## runs
 
+function replace!(a::Association, o::Run, n::Run)
+    # @assert o in a
+    @assert keys(last(a.runs).run.metadata) == keys(o.metadata) == keys(n.metadata)
+
+    runs = OrderedSet{Repetition}()
+    associations = Set{Tuple{POI, Repetition}}()
+    for r1 in a.runs
+        if r1.run == o
+            push!(runs, n)
+        else
+            push!(runs, r1.run)
+        end
+        r2 = last(runs)
+        for (p, r) in a.associations
+            if r1 == r
+                push!(associations, (p, r2))
+            end
+        end
+    end
+
+    empty!(a.runs)
+    push!(a.runs, runs...)
+    isempty(associations) && return a 
+    empty!(a.associations)
+    push!(a.associations, associations...)
+    return a
+end
+
+
 function replace!(a::Association, o::Repetition, n::Run)
     @assert o in a
     @assert keys(last(a.runs).run.metadata) == keys(o.run.metadata) == keys(n.metadata)

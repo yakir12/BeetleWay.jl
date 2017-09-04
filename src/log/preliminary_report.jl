@@ -83,7 +83,14 @@ function report(folder::String)
     m = vcat(m...)
 
     txt = table(m, header_row = [String.(collect(keys(a.runs[1].run.metadata))); "Repetition"; collect(keys(dur))], title = "Summary for $folder")
-    index = """<!DOCTYPE html> <html> <head> <style> table { font-family: arial, sans-serif; border-collapse: collapse; width: 100%; } td, th { border: 1px solid #dddddd; text-align: left; padding: 8px; } tr:nth-child(even) { background-color: #dddddd; } </style> </head> <body> $txt </body> </html>"""
+    return """<!DOCTYPE html> <html> <head> <style> table { font-family: arial, sans-serif; border-collapse: collapse; width: 100%; } td, th { border: 1px solid #dddddd; text-align: left; padding: 8px; } tr:nth-child(even) { background-color: #dddddd; } </style> </head> <body> $txt </body> </html>"""
 end
 
+function report_gui(folder::String) 
+    filename = joinpath(folder, "report.html")
+    open(filename, "w") do o
+        print(o, report(folder))
+    end
+    openit(filename)
+end
 

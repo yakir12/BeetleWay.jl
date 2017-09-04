@@ -43,7 +43,7 @@ end
 
 @testset "POI" begin
     @test POI(name = "a") == POI("a", Point("", 0, 0, 0), Point("", 0, 0, 0), "", "")
-    @test_throws AssertionError POI("name1", Point("file1.mp4", Second(1)), Point("file1.mp4", Second(0)), "label", "comment")
+    # @test_throws AssertionError POI("name1", Point("file1.mp4", Second(1)), Point("file1.mp4", Second(0)), "label", "comment")
 end
 
 @testset "Run" begin

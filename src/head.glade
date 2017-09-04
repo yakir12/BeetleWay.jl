@@ -25,7 +25,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkImageMenuItem">
+                      <object class="GtkImageMenuItem" id="preliminary.report">
                         <property name="label" translatable="yes">Preliminary report</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
@@ -33,7 +33,7 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem">
+                      <object class="GtkImageMenuItem" id="segment.videos">
                         <property name="label" translatable="yes">Segment videos</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
