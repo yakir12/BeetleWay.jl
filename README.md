@@ -7,30 +7,24 @@
 [![Coveralls](https://coveralls.io/repos/github/yakir12/BeetleWay.jl/badge.svg?branch=master)](https://coveralls.io/github/yakir12/BeetleWay.jl?branch=master)
 
 
-# AssociationsGUI
+# BeetleWay
 
-[![Build Status](https://travis-ci.org/yakir12/AssociationsGUI.jl.svg?branch=master)](https://travis-ci.org/yakir12/AssociationsGUI.jl)
-
-[![Coverage Status](https://coveralls.io/repos/yakir12/AssociationsGUI.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/yakir12/AssociationsGUI.jl?branch=master)
-
-`AssociationsGUI.jl` helps scientists log video files and the experiments associated with these files. It outputs four files that together contain all the information necessary to process your videos. By meticulously logging your data early-on, later stages of the data-processing can be efficiently automated.
+`BeetleWay.jl` helps scientists log video files and the experiments associated with these files. It outputs four files that together contain all the information necessary to process your videos. By meticulously logging your data early-on, later stages of the data-processing can be efficiently automated.
 
 ## How to install
 1. If you haven't already, install [Julia](https://julialang.org/downloads/) -> you should be able to launch it (some icon on the Desktop or some such)
 2. Start Julia -> a Julia-terminal popped up
-3. Copy: `Pkg.clone("git://github.com/yakir12/Associations.jl.git"); Pkg.build("Associations"); Pkg.clone("git://github.com/yakir12/AssociationsGUI.jl.git")` and paste it in the newly opened Julia-terminal, press Enter
-4. To test the package (not necessary), copy: `Pkg.test("Associations"); Pkg.test("AssociationsGUI")` and paste it in the Julia-terminal, press enter
+3. Copy: `Pkg.clone("git://github.com/yakir12/BeetleWay.jl.git"); Pkg.build("BeetleWay")` and paste it in the newly opened Julia-terminal, press Enter
+4. To test the package (not necessary), copy: `Pkg.test("BeetleWay")` and paste it in the Julia-terminal, press enter
 5. You can close the Julia-terminal after it's done running
 
 ## Quick start
 1.  Start a Julia-terminal
 2.  Copy and paste the following code in the Julia-terminal:
     ```julia
-    using AssociationsGUI
-    folder = "<videos folder>"
-    main(folder)
+    using BeetleWay
     ```
-    where `<videos folder>` is the path to the folder that contains all the videos you want to log (so replace `<videos folder>` with the actual path to your videos folder). 
+    You'll immidiately be asked to point to the location of the folder that contains all the videos you want to log. 
 3.  The program will run normally, and you can close the Julia terminal when you're done logging your videos.
 
 ## How to use
