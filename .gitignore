@@ -6,4 +6,5 @@
 *~
 /docs/build/
 /docs/site/
-/deps/
+/deps/downloads/
+/deps/src/
