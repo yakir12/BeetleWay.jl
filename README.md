@@ -106,7 +106,7 @@ Note that apart from the requirement that a `metadata` folder contain the two `p
 An example of this file hierarchy, the metadata folder, and the two `csv` files is available [here](test/videofolder).
 
 ### Instructions
-Once you've created the `metadata` folder and the two `csv` files in your videos folder (i.e. the folder that contains all the videos that you want to log), start the program (see [here](#Quick start)). After launching the program, a new window will appear, where you can add new POIs, Runs, and assign their appropriate associations. 
+Once you've created the `metadata` folder and the two `csv` files in your videos folder (i.e. the folder that contains all the videos that you want to log), start the program (see [here](#Quick start)). After launching the program, and choosing the video folder, a new window will appear, where you can add new POIs, Runs, and assign their appropriate associations. 
 
 In the initial window you'll have two plus signs, `+`, to press on. The one to the top-right adds new POIs. The lower-left plus adds new Runs.
 
