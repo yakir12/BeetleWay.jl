@@ -20,7 +20,7 @@ addons:
             - libgtk-3-0
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia -e 'Pkg.clone(pwd()); using BinDeps; println(BinDeps.debug("BeetleWay")); Pkg.build("BeetleWay"); Pkg.test("BeetleWay"; coverage=true)'
+  - xvfb-run julia -e 'Pkg.clone(pwd()); using BinDeps; println(BinDeps.debug("BeetleWay")); Pkg.build("BeetleWay"); Pkg.test("BeetleWay"; coverage=true)'
 after_success:
   - julia -e 'cd(Pkg.dir("BeetleWay")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
   - julia -e 'Pkg.add("Documenter"); cd(Pkg.dir("BeetleWay")); include(joinpath("docs", "make.jl"))'
