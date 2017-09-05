@@ -10,8 +10,8 @@ include(joinpath(@__DIR__, "log", "preliminary_report.jl"))
 include(joinpath(@__DIR__, "track", "segment.jl"))
 
 
-# folder = open_dialog("Select Video Folder", action=Gtk.GtkFileChooserAction.SELECT_FOLDER)
-folder = "/home/yakir/datasturgeon/projects/marie/afterLog/therese"
+folder = open_dialog("Select Video Folder", action=Gtk.GtkFileChooserAction.SELECT_FOLDER)
+# folder = "/home/yakir/datasturgeon/projects/marie/afterLog/therese"
 
 b = Builder(filename=joinpath(@__DIR__, "head.glade"))
 id1 = signal_connect(_ -> log_gui(folder), b["start.log"], :clicked)
