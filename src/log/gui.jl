@@ -66,7 +66,7 @@ function wire_poi_gui(vfs, folder, add_poi)
     showall(poi_builder["window"])
     foreach(x -> visible(poi_builder["window"], !x), done_poi)
 
-    bind!(signal(done_poi), !, signal(add_poi), !)
+    bindmap!(signal(done_poi), !, signal(add_poi), !)
 
     return (poi_in, poi_out)
 end
@@ -130,7 +130,7 @@ function wire_run_gui(folder, add_run)
     showall(run_builder["window.run.wJqRk"])
     foreach(x -> visible(run_builder["window.run.wJqRk"], !x), done_run)
 
-    bind!(signal(done_run), !, signal(add_run), !)
+    bindmap!(signal(done_run), !, signal(add_run), !)
 
     return (run_in, run_out)
 end

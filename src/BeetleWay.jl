@@ -2,6 +2,9 @@ module BeetleWay
 
 using Gtk.ShortNames, GtkReactive, DataStructures
 
+# patches
+include(joinpath(@__DIR__, "patches.jl"))
+
 include(joinpath(@__DIR__, "log", "gui.jl"))
 include(joinpath(@__DIR__, "log", "preliminary_report.jl"))
 include(joinpath(@__DIR__, "track", "segment.jl"))

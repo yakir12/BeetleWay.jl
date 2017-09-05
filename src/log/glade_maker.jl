@@ -58,7 +58,7 @@ const head_xml = """<?xml version="1.0" encoding="UTF-8"?>
 <property name="can_focus">False</property>
 """
 label_xml(row::Int, text::String) = """<child>
-<object class="GtkLabel" id="some4.wJqRk">
+<object class="GtkLabel" id="some4$row.$text.wJqRk">
 <property name="visible">True</property>
 <property name="can_focus">False</property>
 <property name="label" translatable="yes">$text</property>

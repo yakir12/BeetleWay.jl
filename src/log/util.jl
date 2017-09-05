@@ -58,7 +58,8 @@ function openit(f::String)
     else
         error("Unknown OS")
     end
-    return run(ignorestatus(cmd))
+    return run(cmd)
+    # return run(ignorestatus(cmd))
         #stream, proc = open(cmd)
         # return proc
         # try to see if you can kill the spawned process (closing the movie player). this will be useful for testing this, and for managing shit once the user is done (not sure if all the players automatically close when the user quits julia)
