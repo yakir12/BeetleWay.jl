@@ -33,9 +33,13 @@ function wire_poi_gui(vfs, folder, add_poi)
     done_poi = togglebutton(true, widget=poi_builder["done"])
     cancel_poi = button(widget=poi_builder["cancel"])
     # functions 
-    tsksstrt, rsltsstrt = async_map(nothing, signal(playstart)) do _
-        openit(joinpath(folder, value(f1)))
-        return nothing
+
+    # tsksstrt, rsltsstrt = async_map(nothing, signal(playstart)) do _
+    tsksstrt, rsltsstrt = async_map(sin(1), signal(playstart)) do _
+        println("kakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakaka")
+        sin(1)
+        # openit(joinpath(folder, value(f1)))
+        # return nothing
     end
     tsksstp, rsltsstp = async_map(nothing, signal(playstop)) do _
         openit(joinpath(folder, value(f2)))
@@ -67,6 +71,18 @@ function wire_poi_gui(vfs, folder, add_poi)
     foreach(x -> visible(poi_builder["window"], !x), done_poi)
 
     bindmap!(signal(done_poi), !, signal(add_poi), !)
+
+
+
+
+
+    tsk, rsl = async_map(sin(1), poi_out) do _
+        println("kakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakakaka")
+        sin(1)
+    end
+
+
+
 
     return (poi_in, poi_out)
 end
