@@ -88,7 +88,7 @@ function wire_run_gui(folder, add_run)
         end
     end
     parse2glade(glade_widgets)
-    run_builder = Builder(filename=joinpath("/home/yakir/.julia/v0.6/BeetleWay/src/log/run.glade"))
+    run_builder = Builder(filename=joinpath(@__DIR__, "run.glade"))
     run_in = Signal(Run(Dict(k => haskey(drops, k) ? first(drops[k]) : "" for k in keys(glade_widgets)), ""))
 
     widgets = Dict{Symbol, Union{GtkReactive.Textarea, GtkReactive.Dropdown}}()
@@ -141,7 +141,7 @@ function log_gui(folder)
     # points = strip.(vec(readcsv(joinpath(folder, "metadata", "poi.csv"), String)))
 
     ##################################### LOG ######################################
-    log_builder = Builder(filename=joinpath("/home/yakir/.julia/v0.6/BeetleWay/src/log/log.glade"))
+    log_builder = Builder(filename=joinpath(@__DIR__, "log.glade"))
 
     # widgets
     add_poi = togglebutton(false, widget=log_builder["add.poi"])
@@ -331,7 +331,7 @@ function return_selected_videos(a::Association, vfs::OrderedSet{VideoFile})
 end
 
 function checkvideos(a::Association, folder::String, vfs::OrderedSet{VideoFile})
-    builder = Builder(filename=joinpath("/home/yakir/.julia/v0.6/BeetleWay/src/log/video.glade"))
+    builder = Builder(filename=joinpath(@__DIR__, "video.glade"))
     # data
     ft = return_selected_videos(a, vfs)
     n = length(ft)
