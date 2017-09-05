@@ -6,7 +6,6 @@
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/yakir12/BeetleWay.jl?svg=true)](https://ci.appveyor.com/project/yakir12/BeetleWay-jl)
 [![Coveralls](https://coveralls.io/repos/github/yakir12/BeetleWay.jl/badge.svg?branch=master)](https://coveralls.io/github/yakir12/BeetleWay.jl?branch=master)
 
-
 # BeetleWay
 
 `BeetleWay.jl` helps scientists log video files and the experiments associated with these files. It outputs four files that together contain all the information necessary to process your videos. By meticulously logging your data early-on, later stages of the data-processing can be efficiently automated.
