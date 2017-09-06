@@ -17,6 +17,7 @@ b = Builder(filename=joinpath(@__DIR__, "head.glade"))
 id1 = signal_connect(_ -> log_gui(folder), b["start.log"], :clicked)
 id2 = signal_connect(_ -> report_gui(folder), b["preliminary.report"], :activate)
 id3 = signal_connect(_ -> fragment(folder), b["segment.videos"], :activate)
+id4 = signal_connect(_ -> coordinates_gui(folder), b["track"], :clicked)
 
 
 showall(b["head.window"])
