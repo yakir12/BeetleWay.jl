@@ -366,10 +366,14 @@ function checkvideos(a::Association, folder::String, vfs::OrderedSet{VideoFile})
     file = map(state) do i
         ft[i].file
     end
-    tsk, rslt = async_map(nothing, signal(play)) do _
+    foreach(play, init=nothing) do _
+        @spawn openit(joinpath(folder, value(file)))
+        nothing
+    end
+    #=tsk, rslt = async_map(nothing, signal(play)) do _
         openit(joinpath(folder, value(file)))
         return nothing
-    end
+    end=#
     datetime = map(state) do i
         ft[i].datetime
     end
