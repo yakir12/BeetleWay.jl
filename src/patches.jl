@@ -234,69 +234,53 @@ function datetimewidget(t1::DateTime; widget=nothing, signal=nothing)
 end
 
 
+######################## ProgressBar #############################
 
-################# Reactive bind!  ########################
+immutable ProgressBar <: GtkReactive.Widget
+    signal::Signal{Int}
+    widget::Gtk.GtkProgressBar
+    preserved::Vector{Any}
 
-"""
-    `bindmap!(dest, src, twoway=true; initial=true)`
-
-for every update to `src` also update `dest` with a modified value (using the
-function `src2dest`) and, if `dest2src` is specified, a two-way update will hold.
-If `initial` is false, `dest` will only be updated to `src`'s modified value
-when `src` next updates, otherwise (if `initial` is true) both `dest` and `src`
-will take their respective modified values immediately. 
-"""
-function bindmap!(dest::Signal, src2dest::Function, src::Signal, dest2src::Function = identity; initial = true)
-    twoway = dest2src ≠ identity
-    if haskey(Reactive._bindings, src=>dest)
-        # subsequent bind!(dest, src) after initial should be a no-op
-        # though we should allow a change in preference for twoway bind.
-        if twoway
-            bindmap!(src, dest2src, dest, initial = initial)
-        end
-        return
+    function (::Type{ProgressBar})(signal::Signal{Int}, widget, preserved)
+        obj = new(signal, widget, preserved)
+        GtkReactive.gc_preserve(widget, obj)
+        obj
     end
-
-    # We don't set src as a parent of dest, since a
-    # two-way bind would technically introduce a cycle into the signal graph,
-    # and I suppose we'd prefer not to have that. Instead we just set dest as
-    # active when src updates, which will allow its downstream actions to run.
-
-    ordered_pair = src.id < dest.id ? src=>dest : dest=>src # ordered by id
-    twoway && (Reactive._active_binds[ordered_pair] = false)
-    # the binder action comes after dest, so dest's downstream actions
-    # won't run unless we arrange it.
-    function bind_updater(srcval)
-        if !haskey(Reactive._bindings, src=>dest)
-            # will happen if has been unbound but node not gc'd
-            return
-        end
-        is_twoway = haskey(Reactive._active_binds, ordered_pair)
-        if is_twoway && Reactive._active_binds[ordered_pair]
-            # The Reactive._active_binds flag stops the (infinite) cycle of src
-            # updating dest updating src ... in the case of a two-way bind
-            Reactive._active_binds[ordered_pair] = false
-        else
-            is_twoway && (Reactive._active_binds[ordered_pair] = true)
-            # we "pause" the current push!, simulate a push! to dest with
-            # run_push then resume processing the original push by reactivating
-            # the previously active nodes.
-            active_nodes = Reactive.pause_push()
-            # `true` below is for dont_remove_dead nodes - messes with active_nodes
-            # TODO - check that - not sure it actually does, this may be a relic
-            # of an earlier implementation which used the node's id's
-            Reactive.run_push(dest, src2dest(src.value), Reactive.onerror_rethrow, true) # here is the only place where we implement the modifying function!
-            foreach(Reactive.activate!, active_nodes)
-        end
-        nothing
-    end
-    Reactive.finalizer(src, (src)->unbind!(dest, src, twoway))
-
-    Reactive._bindings[src=>dest] = map(bind_updater, src; name="binder: $(src.name)=>$(dest.name)")
-    initial && bind_updater(src.value) # init now that Reactive._bindings[src=>dest] is set
-
-    if twoway
-        bindmap!(src, dest2src, dest, initial = initial)
-    end
-
 end
+
+"""
+    progressbar(n; widget=nothing, signal=nothing)
+
+Create a progressbar displaying the progress of a process; push to the widget new
+iteration integers to update the progressbar. Optionally specify:
+  - the GtkProgressBar `widget` (by default, creates a new one)
+  - the (Reactive.jl) `signal` coupled to this progressbar (by default, creates a new signal)
+"""
+function progressbar(n::Int;
+               widget=nothing,
+               signal=nothing,
+               syncsig=true,
+               own=nothing)
+    signalin = signal
+    signal, value = GtkReactive.init_wsigval(Int, signal, GtkReactive.value(signal))
+    if own == nothing
+        own = signal != signalin
+    end
+    if widget == nothing
+        widget = Gtk.GtkProgressBar()
+    else
+        setproperty!(widget, :fraction, value)
+    end
+    preserved = []
+    if syncsig
+        push!(preserved, map(signal) do val
+            setproperty!(widget, :fraction, val/n)
+        end)
+    end
+    if own
+        Gtk.ondestroy(widget, preserved)
+    end
+    ProgressBar(signal, widget, preserved)
+end
+
+

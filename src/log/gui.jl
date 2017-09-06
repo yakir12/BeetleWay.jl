@@ -33,14 +33,22 @@ function wire_poi_gui(vfs, folder, add_poi)
     done_poi = togglebutton(true, widget=poi_builder["done"])
     cancel_poi = button(widget=poi_builder["cancel"])
     # functions 
-    tsksstrt, rsltsstrt = async_map(nothing, signal(playstart)) do _
+    foreach(playstart, init=nothing) do _
+        @spawn openit(joinpath(folder, value(f1)))
+        return nothing
+    end
+    foreach(playstop, init=nothing) do _
+        @spawn openit(joinpath(folder, value(f2)))
+        return nothing
+    end
+    #=tsksstrt, rsltsstrt = async_map(nothing, signal(playstart)) do _
         openit(joinpath(folder, value(f1)))
         return nothing
     end
     tsksstp, rsltsstp = async_map(nothing, signal(playstop)) do _
         openit(joinpath(folder, value(f2)))
         return nothing
-    end
+    end=#
     start_point = map(Point, f1, start)
     stop_point = map(Point, f2, stop)
     foreach(start_point) do p
@@ -335,13 +343,14 @@ function checkvideos(a::Association, folder::String, vfs::OrderedSet{VideoFile})
     # data
     ft = return_selected_videos(a, vfs)
     n = length(ft)
+    state = Signal(1)
     # widgets
     done = button(widget=builder["done"])
     previous = button(widget=builder["previous"])
     next = button(widget=builder["next"])
     play = button(widget=builder["play"])
+    pb = progressbar(n, widget=builder["progressbar"], signal=state)
     # functions
-    state = Signal(1)
     small = map(x -> x < n, state)
     safenext = filterwhen(small, nothing, signal(next))
     foreach(safenext, init=nothing) do _
