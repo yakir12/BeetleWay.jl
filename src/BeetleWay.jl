@@ -1,6 +1,6 @@
 module BeetleWay
 
-using Gtk.ShortNames, GtkReactive, DataStructures
+using Gtk.ShortNames, GtkReactive, DataStructures, HDF5
 
 # patches
 # include(joinpath(@__DIR__, "patches.jl"))
@@ -11,7 +11,7 @@ include(joinpath(@__DIR__, "track", "segment.jl"))
 
 
 # folder = open_dialog("Select Video Folder", action=Gtk.GtkFileChooserAction.SELECT_FOLDER)
-# folder = "/home/yakir/datasturgeon/projects/marie/afterLog/therese"
+folder = joinpath(first(splitdir(@__DIR__)), "test", "videofolder")
 
 b = Builder(filename=joinpath(@__DIR__, "head.glade"))
 id1 = signal_connect(_ -> log_gui(folder), b["start.log"], :clicked)

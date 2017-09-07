@@ -1,38 +1,3 @@
-################# Gtk yield thing ########################
-import Gtk.open_dialog
-
-function open_dialog(title::AbstractString, parent = Gtk.GtkNullContainer(), filters::Union{AbstractVector, Tuple} = String[]; kwargs...)
-    dlg = Gtk.GtkFileChooserDialog(title, parent, Gtk.GConstants.GtkFileChooserAction.OPEN,
-                               (("_Cancel", Gtk.GConstants.GtkResponseType.CANCEL),
-                                ("_Open",   Gtk.GConstants.GtkResponseType.ACCEPT)); kwargs...)
-    dlgp = Gtk.GtkFileChooser(dlg)
-    if !isempty(filters)
-        makefilters!(dlgp, filters)
-    end
-    yield()
-    response = run(dlg)
-    multiple = getproperty(dlg, :select_multiple, Bool)
-    local selection
-    if response == Gtk.GConstants.GtkResponseType.ACCEPT
-        if multiple
-            filename_list = ccall((:gtk_file_chooser_get_filenames, libgtk), Ptr{Gtk._GSList{String}}, (Ptr{GObject},), dlgp)
-            selection = String[f for f in Gtk.GList(filename_list, transfer-fulltrue)]
-        else
-            selection = Gtk.bytestring(Gtk.GAccessor.filename(dlgp))
-        end
-    else
-        if multiple
-            selection = String[]
-        else
-            selection = Gtk.GLib.utf8("")
-        end
-    end
-    destroy(dlg)
-    return selection
-end
-
-
-
 
 ################# GtkReactive time widgets ###############
 import GtkReactive: timewidget, InputWidget
