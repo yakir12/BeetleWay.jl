@@ -15,6 +15,9 @@ b = Builder(filename=joinpath(@__DIR__, "head.glade"))
 # folder = open_dialog("Select Video Folder", action=Gtk.GtkFileChooserAction.SELECT_FOLDER)
 folder = joinpath(first(splitdir(@__DIR__)), "test", "videofolder")
 
+# test the folder for any problems with the metadata
+assert_metadata(folder)
+
 id1 = signal_connect(_ -> log_gui(folder), b["start.log"], :clicked)
 id2 = signal_connect(_ -> report_gui(folder), b["preliminary.report"], :activate)
 id3 = signal_connect(_ -> fragment(folder), b["segment.videos"], :activate)

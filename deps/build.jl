@@ -1,5 +1,4 @@
 using BinDeps
-Pkg.clone("git@github.com:yakir12/Gtk.jl.git")
 
 basedir = dirname(@__FILE__)
 
