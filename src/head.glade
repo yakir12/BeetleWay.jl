@@ -86,6 +86,7 @@
               <object class="GtkButton" id="process">
                 <property name="label" translatable="yes">Process</property>
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
               </object>
@@ -99,6 +100,7 @@
               <object class="GtkButton" id="analyse">
                 <property name="label" translatable="yes">Analyse</property>
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
               </object>

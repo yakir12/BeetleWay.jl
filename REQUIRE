@@ -1,8 +1,8 @@
 julia 0.6
-Reactive
-HDF5
 BinDeps
-DataStructures
+Reactive
+Gtk
 GtkReactive
+DataStructures
 AutoHashEquals
 UnitfulAngles
