@@ -343,26 +343,20 @@ function checkvideos(a::Association, folder::String, vfs::OrderedSet{VideoFile})
     # data
     ft = return_selected_videos(a, vfs)
     n = length(ft)
-    state = Signal(1)
     # widgets
     done = button(widget=builder["done"])
     previous = button(widget=builder["previous"])
     next = button(widget=builder["next"])
     play = button(widget=builder["play"])
-    pb = progressbar(n, widget=builder["progressbar"], signal=state)
     # functions
-    small = map(x -> x < n, state)
-    safenext = filterwhen(small, nothing, signal(next))
-    foreach(safenext, init=nothing) do _
-        push!(state, value(state) + 1)
-        nothing
+    down = map(_ -> -1, previous)
+    up = map(_ -> +1, next)
+    step = merge(down, up)
+    _state = foldp(1, step) do x,y
+        clamp(x + y, 1, n)
     end
-    large = map(x -> x > 1, state)
-    safeprevious = filterwhen(large, nothing, signal(previous))
-    foreach(safeprevious, init=nothing) do _
-        push!(state, value(state) - 1)
-        nothing
-    end
+    state = droprepeats(_state)
+    pb = progressbar(n, widget=builder["progressbar"], signal=state)
     file = map(state) do i
         ft[i].file
     end

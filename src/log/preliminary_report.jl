@@ -40,11 +40,11 @@ function show(x::Second)::String
 end
 
 function show(x::Time)::String
-    i = Hour(x).value
-    i = i > 12 ? i - 12 : i
+    j = Hour(x).value
+    i, ampm = j > 12 ? (j - 12, :pm) : (j, :am)
     s = Minute(x).value >= 30 ? 0x1F550+(i-1)+12 : 0x1F550+(i-1)
     t = uppercase(num2hex(s)[end-4:end])
-    return string("&#x$t;")
+    return string("&#x$t; $ampm")
 end
 
 function report(folder::String)
