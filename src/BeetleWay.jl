@@ -2,19 +2,18 @@ __precompile__()
 module BeetleWay
 
 using Gtk.ShortNames, GtkReactive, DataStructures#, HDF5
+# const src = @__DIR__
+const src = joinpath(Pkg.dir("BeetleWay"), "src")
 
 # patches
 # include(joinpath(@__DIR__, "patches.jl"))
 
-include(joinpath(@__DIR__, "log", "gui.jl"))
-include(joinpath(@__DIR__, "log", "preliminary_report.jl"))
-include(joinpath(@__DIR__, "track", "segment.jl"))
-
-b = Builder(filename=joinpath(@__DIR__, "head.glade"))
-
+include(joinpath(src, "log", "gui.jl"))
+include(joinpath(src, "log", "preliminary_report.jl"))
+include(joinpath(src, "track", "segment.jl"))
+b = Builder(filename=joinpath(src, "head.glade"))
 # folder = open_dialog("Select Video Folder", action=Gtk.GtkFileChooserAction.SELECT_FOLDER)
-folder = joinpath(first(splitdir(@__DIR__)), "test", "videofolder")
-
+folder = joinpath(src, "..", "test", "videofolder")
 # test the folder for any problems with the metadata
 assert_metadata(folder)
 

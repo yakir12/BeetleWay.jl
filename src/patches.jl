@@ -249,3 +249,80 @@ function progressbar(n::Int;
 end
 
 
+########################## ProgressBar ############################
+
+immutable ProgressBar{T<:Number} <: InputWidget{T}
+    signal::Signal{T}
+    widget::GtkProgressBarLeaf
+    id::Culong
+    preserved::Vector
+
+    function (::Type{ProgressBar{T}}){T}(signal::Signal{T}, widget, id, preserved)
+        obj = new{T}(signal, widget, id, preserved)
+        gc_preserve(widget, obj)
+        obj
+    end
+end
+ProgressBar{T}(signal::Signal{T}, widget::GtkProgressBarLeaf, id, preserved) =
+    ProgressBar{T}(signal, widget, id, preserved)
+
+progressbar(signal::Signal, widget::GtkProgressBarLeaf, id, preserved = []) =
+    ProgressBar(signal, widget, id, preserved)
+
+range2fraction(range::Range{T}, i::T) where T<:Number = (i - first(range) + step(range))/step(range)/length(range)
+
+"""
+    progressbar(range; widget=nothing, value=nothing, signal=nothing, orientation="horizontal")
+
+Create a progressbar widget with the specified `range`. Optionally provide:
+  - the GtkProgressBar `widget` (by default, creates a new one)
+  - the starting `value` (defaults to the median of `range`)
+  - the (Reactive.jl) `signal` coupled to this progressbar (by default, creates a new signal)
+  - the `orientation` of the progressbar.
+"""
+function progressbar{T}(range::Range{T};
+                   widget=nothing,
+                   value=nothing,
+                   signal=nothing,
+                   orientation="horizontal",
+                   syncsig=true,
+                   own=nothing)
+    signalin = signal
+    signal, value = init_wsigval(T, signal, value; default=first(range))
+    if own == nothing
+        own = signal != signalin
+    end
+    if widget == nothing
+        widget = GtkProgressBar()
+        Gtk.G_.size_request(widget, 200, -1)
+    else
+        adj = Gtk.Adjustment(widget)
+        Gtk.G_.fraction(adj, range2fraction(range, value))
+    end
+    Gtk.G_.fraction(widget, range2fraction(range, value))
+
+    ## widget -> signal
+    # id = signal_connect(widget, :value_changed) do w
+        # push!(signal, defaultgetter(w))
+    # end
+
+    ## signal -> widget
+    preserved = []
+    if syncsig
+        push!(preserved, init_signal2widget(widget, id, map(x -> range2fraction(range, x), signal)))
+    end
+    if own
+        ondestroy(widget, preserved)
+    end
+
+    ProgressBar(signal, widget, id, preserved)
+end
+
+
+using Gtk.ShortNames, GtkReactive
+w = Window("BeetleWay")
+p = progressbar(2:2:12)
+push!(w, p)
+showall(w)
+
+push!(p, 7)

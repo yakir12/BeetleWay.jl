@@ -5,6 +5,8 @@ using DataStructures, Base.Dates
 # some base variables
 videofolder = joinpath(Pkg.dir("BeetleWay"), "test", "videofolder")
 
+@test_nowarn BeetleWay.assert_metadata(videofolder)
+
 # make up some test data
 
 folder = mktempdir()
@@ -108,6 +110,10 @@ end
 
     @test A.runs == B.runs
 
+    P4 = POI("name4", Point("file3.mp4", Second(8)), Point("file3.mp4", Second(16)), "other label", "also a comment")
+    push!(A, P4)
+    push!(A, (P4, Repetition(R1, 1)))
+
 end
 
 @testset "delete!" begin
@@ -168,6 +174,8 @@ end
 end
 
 @testset "Time" begin
+
+    @test BeetleWay.getDateTime(videofolder, "a.mp4") == DateTime(2017,02,28,16,04,47)
 
     t1 = 2
     Δ = 4
