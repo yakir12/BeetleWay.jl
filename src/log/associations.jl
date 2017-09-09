@@ -1,6 +1,5 @@
-using DataStructures, AutoHashEquals, Base.Dates, Unitful, UnitfulAngles
+#=using DataStructures, AutoHashEquals, Base.Dates, Unitful, UnitfulAngles
 
-import Base: push!, empty!, delete!, isempty, ==, in, show
 
 export  VideoFile, Point, POI, Run, Repetition, Association, 
         replace!, findVideoFiles, getVideoFiles, save,
@@ -8,8 +7,291 @@ export  VideoFile, Point, POI, Run, Repetition, Association,
 
 const exiftool_base = joinpath(Pkg.dir("BeetleWay"), "deps", "src", "exiftool", "exiftool")
 const exiftool = exiftool_base*(is_windows() ? ".exe" : "")
+=#
+
+using Base.Dates#, DataStructures
+
+import Base: ∈, push!, empty!, delete!#, isempty, ==, in, show
+
 const exts = [".webm", ".mkv", ".flv", ".flv", ".vob", ".ogv", ".ogg", ".drc", ".mng", ".avi", ".mov", ".qt", ".wmv", ".yuv", ".rm", ".rmvb", ".asf", ".amv", ".mp4", ".m4p", ".m4v", ".mpg", ".mp2", ".mpeg", ".mpe", ".mpv", ".mpg", ".mpeg", ".m2v", ".m4v", ".svi", ".3gp", ".3g2", ".mxf", ".roq", ".nsv", ".flv", ".f4v", ".f4p", ".f4a", ".f4b", ".MTS", ".DS_Store"]
 
+read_run_metadata(folder::String) = open(joinpath(folder, "metadata", "run.csv"), "r") do o
+    factors = String[]
+    levels = Vector{Vector{String}}()
+    for (li, l) in enumerate(readlines(o))
+        push!(levels, String[])
+        for (wi, w) in enumerate(split(l, ','))
+            if wi > 1
+                w = strip(w)
+                if isempty(w)
+                    @assert wi == 2 "empty ran level"
+                else
+                    @assert w ∉ levels[li] "run levels are not unique"
+                    # @assert length(levels) < 255 "too many run levels"
+                end
+                push!(levels[li], w)
+            else
+                w = strip(w)
+                @assert !isempty(w) "empty line in metadata"
+                @assert w ∉ factors "factors are not unique in run metadata"
+                # @assert length(factors) < 255 "too many factors in run metadata"
+                push!(factors, w)
+            end
+        end
+    end
+    return (factors, levels)
+end
+
+read_poi_metadata(folder::String) = open(joinpath(folder, "metadata", "poi.csv"), "r") do o
+    poi_names = String[]
+    for w in split(readline(o), ',')
+        w = strip(w)
+        @assert !isempty(w) "empty POI in metadata"
+        @assert w ∉ poi_names "POIs are not unique in poi metadata"
+        # @assert length(poi_names) < 255 "too many POIs in poi metadata"
+        push!(poi_names, w)
+    end
+    return poi_names
+end
+
+function find_all_files(folder::String)
+    all_files = String[]
+    for (root, dir, files) in walkdir(folder)
+        for file in files
+            file[1] == '.' && continue
+            last(splitext(file)) in exts || continue
+            push!(all_files, file)
+        end
+    end
+    return all_files
+end
+
+struct Metadata
+    poi_names::Vector{String} # must be unique
+    factors::Vector{String} # must be unique
+    levels::Vector{Vector{String}} # must be unique
+    files::Vector{String} # must be unique
+
+    function Metadata(folder::String)
+        poi_names = read_poi_metadata(folder)
+        factors, levels = read_run_metadata(folder)
+        files = find_all_files(folder)
+        new(poi_names, factors, levels, files)#, setups)
+    end
+end
+
+struct File
+    name::Int # must be unique
+    creation::DateTime
+    duration::Second 
+
+    function File(md::Metadata, name::String, creation::DateTime, duration::Second) 
+        @assert name ∈ md.files "file not found in metadata"
+        @assert duration ≥ Second(0) "negative durations not allowed"
+        new(findfirst(md.files, name), creation, duration)
+    end
+end
+
+struct Point
+    file::Int
+    time::Second
+
+    function Point(md::Metadata, file::String, time::Second) 
+        @assert file ∈ md.files "file not found in metadata"
+        @assert time ≥ Second(0) "negative times not allowed"
+        new(findfirst(md.files, file), time)
+    end
+end
+
+struct POI
+    name::Int
+    start::Point
+    stop::Point
+    label::String
+    comment::String
+
+    function POI(md::Metadata, name::String, start::Point, stop::Point, label::String, comment::String)
+        @assert name ∈ md.poi_names "POI not found in metadata"
+        @assert start.file ≠ stop.file || start.time ≤ stop.time "starting point comes after stoping point"
+        new(findfirst(md.poi_names, name), start, stop, label, comment)
+    end
+end
+
+struct Run
+    setup::Vector{Union{Int, String}}
+    comment::String
+
+    function Run(md::Metadata, setup_string::Vector{String}, comment::String)
+        setup = Vector{Union{Int, String}}()
+        for (i, s) in enumerate(setup_string)
+            if length(md.levels[i]) == 1 && isempty(md.levels[i][1])
+                push!(setup, s)
+            else
+                j = findfirst(md.levels[i], s)
+                @assert j ≠ 0 "run levels not found in metadata"
+                push!(setup, j)
+            end
+        end
+        new(setup, comment)
+    end
+end
+
+struct Repetition
+    run::Run
+    repetition::Int
+end
+
+struct Association
+    md::Metadata
+
+    # data
+    pois::Vector{POI} # must be unique
+    repetitions::Vector{Repetition} 
+    associations::Vector{Pair{Int, Int}} # must be unique
+
+    function Association(folder::String)
+        md = Metadata(folder)
+
+        if isdir(joinpath(folder, "log"))
+        else
+            pois = POI[]
+            repetitions = Repetition[]
+            associations = Pair{POI, Repetition}[]
+        end
+        new(md, pois, repetitions, associations)
+    end
+end
+
+# in
+
+∈(x::POI, a::Association) = x ∈ a.pois
+∈(x::Repetition, a::Association) = x ∈ a.repetitions
+∈(x::Pair{Int, Int}, a::Association) = x ∈ a.associations
+
+# pushes
+
+function push!(a::Association, x::POI)
+    x ∉ a && push!(a.pois, x)
+    return a
+end
+
+function push!(a::Association, x::Run)
+    repetition = reduce((x, r) -> max(x, r.run.setup == x.setup ? x.repetition : 0), 0, a.repetitions) + 1
+    push!(a.repetitions, Repetition(x, repetition))
+    return a
+end
+
+function push!(a::Association, x::Pair{POI, Repetition})
+    i = findfirst(a.pois, first(x))
+    @assert i ≠ 0 "association pair includes a non existent POI"
+    j = findfirst(a.repetitions, last(x))
+    @assert j ≠ 0 "association pair includes a non existent run"
+    x = i => j
+    x ∉ a.associations && push!(a.associations, x)
+    return a
+end
+#=function push!(a::Association, x::Pair{Int, Int})
+    @assert first(x) ≤ length(a.pois) "association pair includes a non existent POI"
+    @assert last(x) ≤ length(a.repetitions) "association pair includes a non existent run"
+    x ∉ a.associations && push!(a.associations, x)
+    return a
+end=#
+
+# deletes
+
+function delete!(a::Association, x::POI)
+    i = findfirst(a.pois, x)
+    i == 0 && return a
+    deleteat!(a.pois, i)
+    filter!(y -> first(y) ≠ i, a.associations)
+    for (j,(p, r)) in enumerate(a.associations)
+        if p > i
+            splice!(a.associations, j, (p - 1) => r)
+        end
+    end
+    return a
+end
+
+function delete!(a::Association, x::Repetition)
+    x ∉ a && return a
+    ind = 0
+    for (i,r) in enumerate(a.repetitions)
+        if r.run.setup == x.run.setup
+            if r == x
+                ind = copy(i)
+                deleteat!(a.repetitions, i)
+            else
+                if r.repetition > x.repetition
+                    r.repetition -= 1
+                end
+            end
+        end
+    end
+    for (j,(p, r)) in enumerate(a.associations)
+        if r > ind
+            splice!(a.associations, j, p => (r - 1))
+        end
+    end
+    return a
+end
+
+function delete!(a::Association, x::Pair{Int, Int})
+    i = findfirst(a.associations, x)
+    i == 0 && return a
+    deleteat!(a.associations, i)
+    return a
+end
+
+# replace
+
+function replace!(a::Association, o::POI, n::POI)
+    o == n && return a
+    @assert n ∉ a "new POI already exists"
+    i = findfirst(a.pois, o)
+    @assert i ≠ 0 "old POI not found"
+    splice!(a.pois, i, n)
+    return a
+end
+
+function replace!(a::Association, o::Repetition, n::Repetition)
+    o == n && return a
+    @assert n ∉ a "new run already exists"
+    i = findfirst(a.repetitions, o)
+    @assert i ≠ 0 "old run not found"
+    return a
+end
+
+# empty
+
+function empty!(a::Association)
+    empty!(a.pois)
+    empty!(a.runs)
+    empty!(a.associations)
+    return a
+end
+
+
+
+
+
+
+
+folder = "/home/yakir/.julia/v0.6/BeetleWay/test/videofolder"
+a = Association(folder)
+
+p1 = Point(a.md, "a.mp4", Second(0))
+p2 = Point(a.md, "b.mp4", Second(2))
+p = POI(a.md, "Walking", p1, p2, "label", "comment")
+push!(a, p)
+r = Run(a.md, ["What not", "London", "Dark", "Upper", "Earth", "kakaka"], "comment")
+push!(a, r)
+rr = a.repetitions[end]
+push!(a, p => rr)
+
+using JLD
+
+
+#=
 @auto_hash_equals immutable VideoFile
     file::String
     datetime::DateTime
@@ -98,40 +380,8 @@ end
 
 Association() = Association(OrderedSet{POI}(), OrderedSet{Repetition}(), Set{Tuple{POI, Repetition}}())
 
-# in
-
-in(x::POI, a::Association) = x in a.pois
-in(x::Repetition, a::Association) = x in a.runs
-in(x::Tuple{POI, Repetition}, a::Association) = x in a.associations
-
 # equal keys
 ==(a::Base.KeyIterator, b::Base.KeyIterator) = length(a)==length(b) && all(k->in(k,b), a)
-
-# pushes
-
-function run2repetition(xs::OrderedSet{Repetition}, r::Run)
-    isempty(xs) || @assert keys(last(xs).run.metadata) == keys(r.metadata)
-    Repetition(r, reduce((x, y) -> max(x, y.run.metadata == r.metadata ? y.repetition : 0), 0, xs) + 1)
-end
-
-push!(xs::OrderedSet{Repetition}, r::Run) = push!(xs, run2repetition(xs, r))
-
-function push!(a::Association, t::POI)
-    push!(a.pois, t)
-    return a
-end
-
-function push!(a::Association, r::Run)
-    push!(a.runs, r)
-    return a
-end
-
-function push!(a::Association, x::Tuple{POI, Repetition})
-    @assert first(x) in a.pois
-    @assert last(x) in a.runs
-    push!(a.associations, x)
-    return a
-end
 
 
 # replace
@@ -192,52 +442,6 @@ function replace!(a::Association, o::Repetition, n::Run)
     isempty(associations) && return a 
     empty!(a.associations)
     push!(a.associations, associations...)
-    return a
-end
-
-## pois
-
-replace!(xs::OrderedSet{POI}, o::POI, n::POI) = OrderedSet{POI}(x == o ? n : x for x in xs)
-replace!(xs::Set{Tuple{POI, Repetition}}, o::POI, n::POI) = Set{Tuple{POI, Repetition}}(first(x) == o ? (n, last(x)) : x for x in xs)
-function replace!(a::Association, o::POI, n::POI)
-    o == n && return a
-    @assert o in a
-    pois = replace!(a.pois, o, n)
-    empty!(a.pois)
-    push!(a.pois, pois...)
-    isempty(a.associations) && return a 
-    associations = replace!(a.associations, o, n)
-    empty!(a.associations)
-    push!(a.associations, associations...)
-    return a
-end
-
-# deletes
-
-function delete!(a::Association, r::Repetition)
-    r in a || return a
-    delete!(a.runs, r)
-    filter!(x -> last(x) != r, a.associations)
-    for x in a.runs
-        if x.run.metadata == r.run.metadata && x.repetition > r.repetition
-            replace!(a, x, x.run)
-        end
-    end
-    return a
-end
-
-function delete!(a::Association, p::POI)
-    p in a || return a
-    delete!(a.pois, p)
-    filter!(x -> first(x) != p, a.associations)
-    return a
-end
-
-function delete!(a::Association, x::Tuple{POI, Repetition})
-    x in a || return a
-    @assert first(x) in a.pois
-    @assert last(x) in a.runs
-    delete!(a.associations, x)
     return a
 end
 
@@ -364,18 +568,6 @@ function loadPOIs(folder::String)::OrderedSet{POI}
     return tgs
 end
 
-function getmetadata(folder)
-    metadata = Dict{Symbol, String}()
-    file = joinpath(folder, "metadata", "run.csv")
-    if isfile(file)
-        b = readcsv(file, comments = false)
-        for i = 1:size(b,1)
-            metadata[Symbol(strip(b[i, 1]))] = length(b[i,:]) < 2 ? "" : strip(b[i, 2])
-        end
-    end
-    return metadata
-end
-
 function loadRuns(folder::String)::OrderedSet{Repetition}
     filescsv = joinpath(folder, "log", "runs.csv")
     rs = OrderedSet{Repetition}()
@@ -443,5 +635,5 @@ function delete_empty_metadata!(a::Association)
             end
         end
     end
-end
+end=#
 
