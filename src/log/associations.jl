@@ -9,11 +9,20 @@ const exiftool_base = joinpath(Pkg.dir("BeetleWay"), "deps", "src", "exiftool", 
 const exiftool = exiftool_base*(is_windows() ? ".exe" : "")
 =#
 
-using Base.Dates#, DataStructures
+using Base.Dates, JLD#, DataStructures
 
 import Base: ∈, push!, empty!, delete!#, isempty, ==, in, show
+import JLD.save
 
 const exts = [".webm", ".mkv", ".flv", ".flv", ".vob", ".ogv", ".ogg", ".drc", ".mng", ".avi", ".mov", ".qt", ".wmv", ".yuv", ".rm", ".rmvb", ".asf", ".amv", ".mp4", ".m4p", ".m4v", ".mpg", ".mp2", ".mpeg", ".mpe", ".mpv", ".mpg", ".mpeg", ".m2v", ".m4v", ".svi", ".3gp", ".3g2", ".mxf", ".roq", ".nsv", ".flv", ".f4v", ".f4p", ".f4a", ".f4b", ".MTS", ".DS_Store"]
+
+struct SetLevels
+    data::Vector{String}
+end
+
+struct FreeLevels
+    data::Vector{String}
+end
 
 read_run_metadata(folder::String) = open(joinpath(folder, "metadata", "run.csv"), "r") do o
     factors = String[]
@@ -39,7 +48,7 @@ read_run_metadata(folder::String) = open(joinpath(folder, "metadata", "run.csv")
             end
         end
     end
-    return (factors, levels)
+    return (factors, [length(l) == 1 && isempty(l[1]) ? FreeLevels(String[]) : SetLevels(l) for l in levels])
 end
 
 read_poi_metadata(folder::String) = open(joinpath(folder, "metadata", "poi.csv"), "r") do o
@@ -69,15 +78,40 @@ end
 struct Metadata
     poi_names::Vector{String} # must be unique
     factors::Vector{String} # must be unique
-    levels::Vector{Vector{String}} # must be unique
+    levels::Vector{Union{FreeLevels, SetLevels}} # must be unique
     files::Vector{String} # must be unique
+end
 
-    function Metadata(folder::String)
-        poi_names = read_poi_metadata(folder)
-        factors, levels = read_run_metadata(folder)
-        files = find_all_files(folder)
-        new(poi_names, factors, levels, files)#, setups)
+function Metadata(folder::String)
+    poi_names = read_poi_metadata(folder)
+    factors, levels = read_run_metadata(folder)
+    files = find_all_files(folder)
+    return Metadata(poi_names, factors, levels, files)
+end
+
+function combine(org::Metadata, new::Metadata)
+    poi_names = org.poi_names ∪ new.poi_names
+    factors = org.factors
+    levels = org.levels
+    for (i,f) in enumerate(org.factors)
+        j = findfirst(new.factors, f)
+        if j ≠ 0
+            if new.levels[j] isa FreeLevels
+                levels[i] = FreeLevels(levels[i].data)
+            else
+                levels[i] = SetLevels(levels[i].data ∪ new.levels[j].data)
+            end
+        end
     end
+    for (i,f) in enumerate(new.factors)
+        j = findfirst(org.factors, f)
+        if j == 0
+            push!(factors, f)
+            push!(levels, new.levels[j])
+        end
+    end
+    files = org.files ∪ new.files
+    return Metadata(poi_names, factors, levels, files)
 end
 
 struct File
@@ -118,18 +152,24 @@ struct POI
 end
 
 struct Run
-    setup::Vector{Union{Int, String}}
+    setup::Vector{Int}
     comment::String
 
     function Run(md::Metadata, setup_string::Vector{String}, comment::String)
-        setup = Vector{Union{Int, String}}()
-        for (i, s) in enumerate(setup_string)
-            if length(md.levels[i]) == 1 && isempty(md.levels[i][1])
-                push!(setup, s)
-            else
-                j = findfirst(md.levels[i], s)
+        setup = Int[]
+        for (x,y) in zip(setup_string, md.levels)
+            if y isa SetLevels
+                j = findfirst(y.data, x)
                 @assert j ≠ 0 "run levels not found in metadata"
                 push!(setup, j)
+            else
+                j = findfirst(y.data, x)
+                if j ≠ 0
+                    push!(setup, j)
+                else
+                    push!(y.data, x)
+                    push!(setup, length(y.data))
+                end
             end
         end
         new(setup, comment)
@@ -141,7 +181,9 @@ struct Repetition
     repetition::Int
 end
 
+
 struct Association
+    folder::String
     md::Metadata
 
     # data
@@ -150,15 +192,21 @@ struct Association
     associations::Vector{Pair{Int, Int}} # must be unique
 
     function Association(folder::String)
-        md = Metadata(folder)
 
-        if isdir(joinpath(folder, "log"))
+        md = Metadata(folder)
+        file = joinpath(folder, "log", "log.jld")
+        if isfile(file)
+            a = load(file, "a")
+            md = combine(a.md, md)
+            pois = a.pois
+            repetitions = a.repetitions
+            associations = a.associations
         else
             pois = POI[]
             repetitions = Repetition[]
             associations = Pair{POI, Repetition}[]
         end
-        new(md, pois, repetitions, associations)
+        new(folder, md, pois, repetitions, associations)
     end
 end
 
@@ -176,7 +224,7 @@ function push!(a::Association, x::POI)
 end
 
 function push!(a::Association, x::Run)
-    repetition = reduce((x, r) -> max(x, r.run.setup == x.setup ? x.repetition : 0), 0, a.repetitions) + 1
+    repetition = reduce((y, r) -> max(y, r.run.setup == x.setup ? r.repetition : 0), 0, a.repetitions) + 1
     push!(a.repetitions, Repetition(x, repetition))
     return a
 end
@@ -219,7 +267,6 @@ function delete!(a::Association, x::Repetition)
         if r.run.setup == x.run.setup
             if r == x
                 ind = copy(i)
-                deleteat!(a.repetitions, i)
             else
                 if r.repetition > x.repetition
                     r.repetition -= 1
@@ -227,6 +274,8 @@ function delete!(a::Association, x::Repetition)
             end
         end
     end
+    deleteat!(a.repetitions, ind)
+    filter!(y -> last(y) ≠ ind, a.associations)
     for (j,(p, r)) in enumerate(a.associations)
         if r > ind
             splice!(a.associations, j, p => (r - 1))
@@ -270,6 +319,11 @@ function empty!(a::Association)
     return a
 end
 
+# save
+
+save(a::Association) = save(joinpath(a.folder, "log", "log.jld"), "a", a) 
+
+
 
 
 
@@ -285,10 +339,19 @@ p = POI(a.md, "Walking", p1, p2, "label", "comment")
 push!(a, p)
 r = Run(a.md, ["What not", "London", "Dark", "Upper", "Earth", "kakaka"], "comment")
 push!(a, r)
+push!(a, r)
+r = Run(a.md, ["What not", "London", "Dark", "Upper", "Earth", "asdas"], "comment")
+push!(a, r)
+r = Run(a.md, ["That cat", "London", "Dark", "Upper", "Earth", "pipe"], "comment")
+push!(a, r)
 rr = a.repetitions[end]
 push!(a, p => rr)
+delete!(a, rr)
 
-using JLD
+save(a)
+
+# using JLD
+# @save joinpath(folder, "log", "log.jld") a
 
 
 #=
