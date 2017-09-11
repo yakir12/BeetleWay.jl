@@ -57,7 +57,7 @@
             <property name="can_focus">False</property>
             <property name="homogeneous">True</property>
             <child>
-              <object class="GtkButton" id="start.log">
+              <object class="GtkToggleButton" id="start.log">
                 <property name="label" translatable="yes">Log</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -70,7 +70,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="track">
+              <object class="GtkToggleButton" id="track">
                 <property name="label" translatable="yes">Track</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>

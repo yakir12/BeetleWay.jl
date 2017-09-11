@@ -69,7 +69,7 @@ label_xml(row::Int, text::String) = """<child>
 </packing>
 </child>
 """
-dropdown_xml(row::Int, id::Symbol) = """<child>
+dropdown_xml(row::Int, id::String) = """<child>
 <object class="GtkComboBoxText" id="$id">
 <property name="visible">True</property>
 <property name="can_focus">False</property>
@@ -80,7 +80,7 @@ dropdown_xml(row::Int, id::Symbol) = """<child>
 </packing>
 </child>
 """
-textbox_xml(row::Int, id::Symbol) = """<child>
+textbox_xml(row::Int, id::String) = """<child>
 <object class="GtkTextView" id="$id">
 <property name="visible">True</property>
 <property name="can_focus">True</property>
@@ -144,13 +144,14 @@ const tail_xml = """</object>
 </child>
 </object>
 </interface>"""
-parse2glade(x::OrderedDict{Symbol,Tuple{Symbol,String}}) = open(joinpath(@__DIR__, "run.glade"), "w") do o
+parse2glade(x) = open(joinpath(@__DIR__, "run.glade"), "w") do o
     print(o, head_xml)
-    for (i, (id, (widget, l))) in enumerate(x)
+    for (i, (t,l)) in enumerate(x)
         print(o, label_xml(i - 1, l))
     end
-    for (i, (id, (widget, l))) in enumerate(x)
-        txt = widget == :dropdown ? dropdown_xml(i - 1, id) : textbox_xml(i - 1, id)
+    for (i, (t,l)) in enumerate(x)
+        #TODO: maybe fix this type equation
+        txt = t == SetLevels ? dropdown_xml(i - 1, l) : textbox_xml(i - 1, l)
         print(o, txt)
     end
     print(o, tail_xml)
