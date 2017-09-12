@@ -25,16 +25,24 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkImageMenuItem" id="preliminary.report">
-                        <property name="label" translatable="yes">Preliminary report</property>
+                      <object class="GtkImageMenuItem" id="check.videos">
+                        <property name="label" translatable="yes">Check videos date &amp; time</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_stock">False</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="segment.videos">
-                        <property name="label" translatable="yes">Segment videos</property>
+                      <object class="GtkImageMenuItem" id="split.videos">
+                        <property name="label" translatable="yes">Split videos</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="use_stock">False</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem" id="preliminary.report">
+                        <property name="label" translatable="yes">Preliminary report</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_stock">False</property>

@@ -65,6 +65,17 @@ start_log = button(widget=head_builder["start.log"])
 # id3 = signal_connect(_ -> fragment(a), head_builder["segment.videos"], :activate)
 # id4 = signal_connect(_ -> coordinates_gui(a), head_builder["track"], :clicked)
 
+video_id = signal_connect(log_builder["check.videos"], :activate) do _
+    push!(head_vis, false)
+    push!(video_vis, true)
+end
+
+split_videos_id = signal_connect(log_builder["split.videos"], :activate) do _
+end
+
+preliminary_report_id = signal_connect(log_builder["preliminary.report"], :activate) do _
+end
+
 # functions
 foreach(start_log, init=nothing) do _
     push!(head_vis, false)
