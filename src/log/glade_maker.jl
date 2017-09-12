@@ -15,7 +15,7 @@ const head_xml = """<?xml version="1.0" encoding="UTF-8"?>
 <property name="visible">True</property>
 <property name="can_focus">False</property>
 <child>
-<object class="GtkToggleButton" id="done.run.wJqRk">
+<object class="GtkButton" id="done.run.wJqRk">
 <property name="label" translatable="yes">Done</property>
 <property name="visible">True</property>
 <property name="can_focus">True</property>
@@ -72,7 +72,7 @@ label_xml(row::Int, text::String) = """<child>
 dropdown_xml(row::Int, id::String) = """<child>
 <object class="GtkComboBoxText" id="$id">
 <property name="visible">True</property>
-<property name="can_focus">False</property>
+<property name="can_focus">True</property>
 </object>
 <packing>
 <property name="left_attach">1</property>

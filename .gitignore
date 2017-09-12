@@ -7,5 +7,6 @@ src/log/run.glade
 *~
 /docs/build/
 /docs/site/
+/test/videofolder/log
 /deps/downloads/
 /deps/src/

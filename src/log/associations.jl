@@ -9,7 +9,7 @@ const exiftool_base = joinpath(Pkg.dir("BeetleWay"), "deps", "src", "exiftool", 
 const exiftool = exiftool_base*(is_windows() ? ".exe" : "")
 =#
 
-using Base.Dates, JLD
+using Base.Dates, JLD, AutoHashEquals
 
 import Base: ∈, push!, empty!, delete!#, isempty, ==, in, show
 import JLD.save
@@ -73,6 +73,7 @@ function find_all_files(folder::String)
 end
 
 struct Metadata
+    folder::String
     poi_names::Vector{String} # must be unique
     factors::Vector{String} # must be unique
     levels::Vector{Union{FreeLevels, SetLevels}} # must be unique
@@ -83,32 +84,7 @@ function Metadata(folder::String)
     poi_names = read_poi_metadata(folder)
     factors, levels = read_run_metadata(folder)
     files = find_all_files(folder)
-    return Metadata(poi_names, factors, levels, files)
-end
-
-function combine(org::Metadata, new::Metadata)
-    poi_names = org.poi_names ∪ new.poi_names
-    factors = org.factors
-    levels = org.levels
-    for (i,f) in enumerate(org.factors)
-        j = findfirst(new.factors, f)
-        if j ≠ 0
-            if new.levels[j] isa FreeLevels
-                levels[i] = FreeLevels(levels[i].data)
-            else
-                levels[i] = SetLevels(levels[i].data ∪ new.levels[j].data)
-            end
-        end
-    end
-    for (i,f) in enumerate(new.factors)
-        j = findfirst(org.factors, f)
-        if j == 0
-            push!(factors, f)
-            push!(levels, new.levels[j])
-        end
-    end
-    files = org.files ∪ new.files
-    return Metadata(poi_names, factors, levels, files)
+    return Metadata(folder, poi_names, factors, levels, files)
 end
 
 # This isn't even used nor needed before the prelimenary_report!!!
@@ -124,7 +100,7 @@ end
     end
 end=#
 
-struct Point
+@auto_hash_equals struct Point
     file::Int
     time::Second
 
@@ -137,23 +113,24 @@ end
 
 Point(md::Metadata) = Point(md, md.files[1], Second(0))
 
-struct POI
+@auto_hash_equals struct POI
     name::Int
+    label::String
     start::Point
     stop::Point
-    label::String
     comment::String
 
-    function POI(md::Metadata, name::String, start::Point, stop::Point, label::String, comment::String)
+    function POI(md::Metadata, name::String, label::String, start::Point, stop::Point, comment::String)
         @assert name ∈ md.poi_names "POI not found in metadata"
         @assert start.file ≠ stop.file || start.time ≤ stop.time "starting point comes after stoping point"
-        new(findfirst(md.poi_names, name), start, stop, label, comment)
+        new(findfirst(md.poi_names, name), label, start, stop, comment)
     end
 end
 
-POI(md::Metadata) = POI(md, md.poi_names[1], Point(md), Point(md), "", "")
+POI(md::Metadata) = POI(md, md.poi_names[1], "", Point(md), Point(md), "")
+POI(md::Metadata, name::String, label::String, start_file::String, start_time::Time, stop_file::String, stop_time::Time, comment::String) = POI(md, name, label, Point(md, start_file, Second(start_time - Time(0))), Point(md, stop_file, Second(stop_time - Time(0))), comment)
 
-struct Run
+@auto_hash_equals struct Run
     setup::Vector{Int}
     comment::String
 
@@ -180,14 +157,40 @@ end
 
 Run(md::Metadata) = Run(md, [first(x.data) for x in md.levels], "") 
 
-struct Repetition
+@auto_hash_equals struct Repetition
     run::Run
-    repetition::Int
+    repetition::Base.RefValue{Int}
+
+    Repetition(run::Run, repetition::Int) = new(run, Ref(repetition))
 end
 
+function combine(org::Metadata, new::Metadata)
+    @assert org.folder == new.folder "data-sets from different folders is not supported yet"
+    poi_names = org.poi_names ∪ new.poi_names
+    factors = org.factors
+    levels = org.levels
+    for (i,f) in enumerate(org.factors)
+        j = findfirst(new.factors, f)
+        if j ≠ 0
+            if new.levels[j] isa FreeLevels
+                levels[i] = FreeLevels(levels[i].data)
+            else
+                levels[i] = SetLevels(levels[i].data ∪ new.levels[j].data)
+            end
+        end
+    end
+    for (i,f) in enumerate(new.factors)
+        j = findfirst(org.factors, f)
+        if j == 0
+            push!(factors, f)
+            push!(levels, new.levels[j])
+        end
+    end
+    files = org.files ∪ new.files
+    return Metadata(org.folder, poi_names, factors, levels, files)
+end
 
 struct Association
-    folder::String
     md::Metadata
 
     # data
@@ -195,30 +198,32 @@ struct Association
     repetitions::Vector{Repetition} 
     associations::Vector{Pair{Int, Int}} # must be unique
 
-    function Association(folder::String)
-
-        md = Metadata(folder)
-        file = joinpath(folder, "log", "log.jld")
+    function Association(md::Metadata)
+        file = joinpath(md.folder, "log", "log.jld")
         if isfile(file)
-            a = load(file, "a")
-            md = combine(a.md, md)
-            pois = a.pois
-            repetitions = a.repetitions
-            associations = a.associations
+            org = load(file, "a")
+            md = combine(org.md, md)
+            pois = org.pois
+            repetitions = org.repetitions
+            associations = org.associations
         else
             pois = POI[]
             repetitions = Repetition[]
             associations = Pair{Int, Int}[]
         end
-        new(folder, md, pois, repetitions, associations)
+        new(md, pois, repetitions, associations)
     end
 end
+
+Association(folder::String) = Association(Metadata(folder))
+
 
 # in
 
 ∈(x::POI, a::Association) = x ∈ a.pois
 ∈(x::Repetition, a::Association) = x ∈ a.repetitions
 ∈(x::Pair{Int, Int}, a::Association) = x ∈ a.associations
+∈(x::Pair{POI, Repetition}, a::Association) = (findfirst(a.pois, first(x))=>findfirst(a.repetitions, last(x))) ∈ a.associations
 
 # pushes
 
@@ -228,7 +233,7 @@ function push!(a::Association, x::POI)
 end
 
 function push!(a::Association, x::Run)
-    repetition = reduce((y, r) -> max(y, r.run.setup == x.setup ? r.repetition : 0), 0, a.repetitions) + 1
+    repetition = reduce((y, r) -> max(y, r.run.setup == x.setup ? r.repetition.x : 0), 0, a.repetitions) + 1
     push!(a.repetitions, Repetition(x, repetition))
     return a
 end
@@ -292,11 +297,10 @@ function delete!(a::Association, x::POI)
     i = findfirst(a.pois, x)
     i == 0 && return a
     deleteat!(a.pois, i)
+    filter!(x -> first(x) ≠ i, a.associations)
     for j in linearindices(a.associations)
         p,r = a.associations[j]
-        if p == i
-            deleteat!(a.associations, j)
-        elseif p > i
+        if p > i
             a.associations[j] = p-1=>r
         end
     end
@@ -311,18 +315,17 @@ function delete!(a::Association, x::Repetition)
             if r == x
                 ind = copy(i)
             else
-                if r.repetition > x.repetition
-                    r.repetition -= 1
+                if r.repetition.x > x.repetition.x
+                    r.repetition.x -= 1
                 end
             end
         end
     end
     deleteat!(a.repetitions, ind)
+    filter!(x -> last(x) ≠ ind, a.associations)
     for j in linearindices(a.associations)
         p,r = a.associations[j]
-        if r == i
-            deleteat!(a.associations, j)
-        elseif r > i
+        if r > ind
             a.associations[j] = p=>r-1
         end
     end
@@ -336,41 +339,72 @@ function delete!(a::Association, x::Pair{Int, Int})
     return a
 end
 
+function delete!(a::Association, x::Pair{POI, Repetition})
+    i = findfirst(a.pois, first(x))
+    @assert i ≠ 0
+    j = findfirst(a.repetitions, last(x))
+    @assert j ≠ 0
+    delete!(a, i=>j)
+end
+
 # replace
 
 function replace!(a::Association, o::POI, n::POI)
     o == n && return a
-    n ∈ a && delete!(a, o)
-    for i in linearindices(a.pois)
+    if n ∈ a
+        delete!(a, o)
+        return a
+    end
+    for i in 1:length(a.pois)
         if a.pois[i] == o
             a.pois[i] = n
             return a
         end
     end
-    @assert i ≠ 0 "old POI not found"
+    throw(AssertionError("old POI not found"))
 end
 
-function replace!(a::Association, o::Repetition, n::Repetition)
-    o == n && return a
-    n ∈ a && delete!(a, o)
-    for i in linearindices(a.repetitions)
-        if a.repetitions[i] == o
-            a.repetitions[i] = n
-            return a
-        end
-    end
+function replace!(a::Association, o::Repetition, n::Run)
+    i = findfirst(a.repetitions, o)
     @assert i ≠ 0 "old run not found"
+    delete!(a, o)
+    push!(a, n)
+    r = pop!(a.repetitions)
+    insert!(a.repetitions, i, r)
 end
 
 # empty
 
 function empty!(a::Association)
     empty!(a.pois)
-    empty!(a.runs)
+    empty!(a.repetitions)
     empty!(a.associations)
     return a
 end
 
 # save
 
-save(a::Association) = save(joinpath(a.folder, "log", "log.jld"), "a", a) 
+save(a::Association) = save(joinpath(a.md.folder, "log", "log.jld"), "a", a) 
+
+# pop
+
+pop(md::Metadata, x::Point) = (md.files[x.file], x.time)
+
+pop(md::Metadata, x::POI) = (md.poi_names[x.name], x.label, pop(md, x.start), pop(md, x.stop), x.comment)
+
+pop(md::Metadata, x::Repetition) = ([l.data[i] for (l, i) in zip(md.levels, x.run.setup)], x.run.comment, x.repetition.x)
+
+function make_label(md::Metadata, x::POI) 
+    name, label = pop(md, x)
+    if isempty(label)
+        return name
+    else
+        return name*":"*label
+    end
+end
+
+function make_label(md::Metadata, x::Repetition) 
+    setup, _, repetition = pop(md, x)
+    l = join(filter(!isempty, join.(Iterators.take.(setup, 3))), ':')
+    return "$l-$repetition"
+end
