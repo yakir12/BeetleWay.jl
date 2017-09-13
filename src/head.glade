@@ -15,18 +15,37 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
+              <object class="GtkMenuItem" id="some6">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">File</property>
+                <child type="submenu">
+                  <object class="GtkMenu" id="some7">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkImageMenuItem" id="quit">
+                        <property name="label">gtk-quit</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="use_stock">True</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
               <object class="GtkMenuItem" id="some2">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">_Post log</property>
-                <property name="use_underline">True</property>
+                <property name="label" translatable="yes">Post log</property>
                 <child type="submenu">
                   <object class="GtkMenu" id="some1">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
                       <object class="GtkImageMenuItem" id="preliminary.report">
-                        <property name="label" translatable="yes">Preliminary report</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_stock">False</property>
@@ -34,7 +53,6 @@
                     </child>
                     <child>
                       <object class="GtkImageMenuItem" id="segment.videos">
-                        <property name="label" translatable="yes">Segment videos</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_stock">False</property>
