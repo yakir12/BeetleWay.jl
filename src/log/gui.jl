@@ -361,3 +361,88 @@ clear_id = signal_connect(log_builder["clear"], :activate) do _
     empty!(a)
     push!(associationᵗ, a)
 end
+
+using VideoIO
+function _get_fc(file::String) # convenience function for `get_duration` and `get_start_time`
+    v = VideoIO.open(file)
+    return unsafe_load(v.apFormatContext[1])
+end
+get_duration(fc::VideoIO.AVFormatContext) = Dates.Millisecond(fc.duration) # this is a bit risky: if AV_TIME_BASE ≠ 1e6 then this conversion will give false results, or if `fc.duration` is not a whole number then this will result in an InexactError. I'll add the appropriate checks if you'll tell me that either event or both are possible.
+
+"""
+    get_duration(file::String) -> Millisecond
+
+Return the duration of the video `file` in `Millisecond`s.
+"""
+get_duration(file::String) = get_duration(_get_fc(file))
+
+get_start_time(fc::VideoIO.AVFormatContext) = Dates.unix2datetime(fc.start_time_realtime)
+
+"""
+    get_start_time(file::String) -> DateTime
+
+Return the starting date & time of the video `file`. Note that if the starting date & time are missing, this function will return the Unix epoch (00:00 1st January 1970).
+"""
+get_start_time(file::String) = get_start_time(_get_fc(file))
+
+file = "/home/yakir/.julia/v0.6/BeetleWay/test/videofolder/a.mp4"
+get_duration(file)
+get_start_time(file)
+
+
+
+println("Duration: $duration seconds")
+
+if no_start_time
+    println("Start time not available")
+else
+    println("start_time_realtime: $start_time_realtime")
+end
+
+
+function checkvideos(a::Association)
+    # data
+    ft = [Set(a.md.files[point.file] for poi in a.pois for point in [poi.start, poi.stop])...]
+    n = length(ft)
+    # widgets
+    done = button(widget=video_builder["done"])
+    previous = button(widget=video_builder["previous"])
+    next = button(widget=video_builder["next"])
+    play = button(widget=video_builder["play"])
+    # functions
+    down = map(_ -> -1, previous)
+    up = map(_ -> +1, next)
+    step = merge(down, up)
+    _state = foldp(1, step) do x,y
+        clamp(x + y, 1, n)
+    end
+    state = droprepeats(_state)
+    pb = progressbar(n, widget=video_builder["progressbar"], signal=state)
+    file = map(state) do i
+        ft[i].file
+    end
+    foreach(play, init=nothing) do _
+        @spawn openit(joinpath(folder, value(file)))
+        nothing
+    end
+    #=tsk, rslt = async_map(nothing, signal(play)) do _
+        openit(joinpath(folder, value(file)))
+        return nothing
+    end=#
+    datetime = map(state) do i
+        ft[i].datetime
+    end
+    dt = datetimewidget(ft[1].datetime, widget=video_builder["datetime"], signal=datetime)
+    label(ft[1].file, widget=video_builder["file.name"], signal=file)
+
+    foreach(dt) do x
+        i = value(state)
+        ft[i] = VideoFile(ft[i].file, x)
+    end
+    foreach(done,  init = nothing) do _
+        save(folder, OrderedSet{VideoFile}(ft))
+        destroy(video_builder["window"])
+    end
+    showall(video_builder["window"])
+end
+
