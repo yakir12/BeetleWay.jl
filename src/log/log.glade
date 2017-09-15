@@ -12,6 +12,11 @@
     <property name="can_focus">False</property>
     <property name="stock">gtk-save</property>
   </object>
+  <object class="GtkImage" id="some14">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-missing-image</property>
+  </object>
   <object class="GtkImage" id="some8">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -66,11 +71,11 @@
                     </child>
                     <child>
                       <object class="GtkImageMenuItem" id="close">
-                        <property name="label">gtk-close</property>
+                        <property name="label">Don't save and close</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
+                        <property name="image">some14</property>
+                        <property name="use_stock">False</property>
                       </object>
                     </child>
                   </object>
