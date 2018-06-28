@@ -2,7 +2,7 @@
 ################# GtkReactive time widgets ###############
 import GtkReactive: timewidget, InputWidget
 
-immutable TimeWidget2{T <: Dates.TimeType} <: InputWidget{T}
+struct TimeWidget2{T <: Dates.TimeType} <: InputWidget{T}
     signal::Signal{T}
     widget::Gtk.GtkFrame
 end
@@ -14,7 +14,7 @@ Return a time widget that includes the `Time` and a `GtkFrame` with the hour, mi
 second widgets in it. You can specify the specific `GtkFrame` widget (useful when using the `Gtk.Builder` and `glade`). Time is guaranteed to be positive. 
 """
 function timewidget(t1::Dates.Time; widget=nothing, signal=nothing)
-    const zerotime = Dates.Time(0,0,0)
+    zerotime = Dates.Time(0,0,0)
     b = Gtk.GtkBuilder(filename=joinpath(@__DIR__, "time.glade"))
     if signal == nothing
         signal = Signal(t1)
@@ -86,7 +86,7 @@ specific `SpinButton` widgets for the hour, minute, and second (useful when usin
 `Gtk.Builder` and `glade`). Date and time are guaranteed to be positive. 
 """
 function datetimewidget(t1::DateTime; widget=nothing, signal=nothing)
-    const zerotime = DateTime(0,1,1,0,0,0)
+    zerotime = DateTime(0,1,1,0,0,0)
     b = Gtk.GtkBuilder(filename=joinpath(@__DIR__, "datetime.glade"))
     # t1 = eps(t0) < Dates.Second(1) ? round(t0, Dates.Second(1)) : t0
     if signal == nothing
@@ -201,7 +201,7 @@ end
 
 ######################## ProgressBar #############################
 
-immutable ProgressBar <: GtkReactive.Widget
+struct ProgressBar <: GtkReactive.Widget
     signal::Signal{Int}
     widget::Gtk.GtkProgressBar
     preserved::Vector{Any}
@@ -251,19 +251,19 @@ end
 
 ########################## ProgressBar ############################
 
-immutable ProgressBar{T<:Number} <: InputWidget{T}
+struct ProgressBar{T<:Number} <: InputWidget{T}
     signal::Signal{T}
     widget::GtkProgressBarLeaf
     id::Culong
     preserved::Vector
 
-    function (::Type{ProgressBar{T}}){T}(signal::Signal{T}, widget, id, preserved)
+    function ProgressBar{T}(signal::Signal{T}, widget, id, preserved) where T
         obj = new{T}(signal, widget, id, preserved)
         gc_preserve(widget, obj)
         obj
     end
 end
-ProgressBar{T}(signal::Signal{T}, widget::GtkProgressBarLeaf, id, preserved) =
+ProgressBar(signal::Signal{T}, widget::GtkProgressBarLeaf, id, preserved) where {T} =
     ProgressBar{T}(signal, widget, id, preserved)
 
 progressbar(signal::Signal, widget::GtkProgressBarLeaf, id, preserved = []) =
@@ -280,13 +280,13 @@ Create a progressbar widget with the specified `range`. Optionally provide:
   - the (Reactive.jl) `signal` coupled to this progressbar (by default, creates a new signal)
   - the `orientation` of the progressbar.
 """
-function progressbar{T}(range::Range{T};
+function progressbar(range::Range{T};
                    widget=nothing,
                    value=nothing,
                    signal=nothing,
                    orientation="horizontal",
                    syncsig=true,
-                   own=nothing)
+                   own=nothing) where T
     signalin = signal
     signal, value = init_wsigval(T, signal, value; default=first(range))
     if own == nothing
